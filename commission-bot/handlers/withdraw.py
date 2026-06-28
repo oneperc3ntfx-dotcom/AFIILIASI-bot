@@ -6,30 +6,28 @@ from telegram.ext import (
     filters,
 )
 
-from services.appscript import get_profile, withdraw
+from services.appscript import get_komisi, withdraw
 from states import BANK, REKENING, NOMINAL
 
-# ==========================
-# Tombol Withdraw
-# ==========================
 
 async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     telegram = str(update.effective_user.id)
 
-    profile = get_profile(telegram)
+    result = get_komisi(telegram)
 
-    if not profile["success"]:
-        await update.message.reply_text(profile["message"])
+    if not result["success"]:
+        await update.message.reply_text(result["message"])
         return ConversationHandler.END
 
-    context.user_data["profile"] = profile
+    context.user_data["wallet"] = result["wallet"]
+    context.user_data["bank"] = result["bank"]
+    context.user_data["rekening"] = result["rekening"]
 
-    # Bank belum ada
-    if profile["bank"] == "" or profile["rekening"] == "":
+    if result["bank"] == "" or result["rekening"] == "":
 
         await update.message.reply_text(
-            "Masukkan Nama Bank."
+            "Silahkan masukkan Nama Bank."
         )
 
         return BANK
@@ -40,10 +38,6 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return NOMINAL
 
-
-# ==========================
-# Input Bank
-# ==========================
 
 async def bank(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -56,41 +50,25 @@ async def bank(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return REKENING
 
 
-# ==========================
-# Input Rekening
-# ==========================
-
 async def rekening(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["rekening"] = update.message.text.strip()
 
     await update.message.reply_text(
-        "Masukkan Nominal Withdraw."
+        "Masukkan nominal Withdraw."
     )
 
     return NOMINAL
 
 
-# ==========================
-# Input Nominal
-# ==========================
-
 async def nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     telegram = str(update.effective_user.id)
 
-    profile = context.user_data["profile"]
-
-    bank = profile["bank"]
-    rekening = profile["rekening"]
-
-    if bank == "":
-        bank = context.user_data["bank"]
-
-    if rekening == "":
-        rekening = context.user_data["rekening"]
-
     nominal = update.message.text.strip()
+
+    bank = context.user_data["bank"]
+    rekening = context.user_data["rekening"]
 
     result = withdraw(
         telegram,
@@ -101,12 +79,17 @@ async def nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if result["success"]:
 
-        text = (
-            "✅ Withdraw Berhasil\n\n"
-            f"Nominal : ${result['nominal']}\n"
-            f"Sisa Komisi : ${result['sisaKomisi']}\n"
-            f"Status : {result['status']}"
-        )
+        text = f"""
+✅ Withdraw Berhasil
+
+💵 Nominal : ${result['nominal']}
+
+💰 Sisa Komisi : ${result['sisaKomisi']}
+
+🏦 Bank : {result['bank']}
+
+📋 Status : {result['status']}
+"""
 
         await update.message.reply_text(text)
 
@@ -116,10 +99,6 @@ async def nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     return ConversationHandler.END
 
-
-# ==========================
-# Handler
-# ==========================
 
 withdraw_handler = ConversationHandler(
 
