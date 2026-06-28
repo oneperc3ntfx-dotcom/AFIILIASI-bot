@@ -6,7 +6,7 @@ from telegram.ext import (
 )
 
 from config import BOT_TOKEN
-from handlers.start import start
+from handlers.start import register_handler
 from handlers.komisi import komisi
 from handlers.withdraw import withdraw
 
@@ -16,7 +16,7 @@ def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
     # Command
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(register_handler)
 
     # Button
     app.add_handler(MessageHandler(filters.Regex("^💰 Cek Komisi$"), komisi))
