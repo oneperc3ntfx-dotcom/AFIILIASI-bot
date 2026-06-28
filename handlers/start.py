@@ -7,11 +7,16 @@ from telegram.ext import (
     filters,
 )
 
-from keyboards.menu import main_menu
 from states import WALLET, GMAIL
+from keyboards.menu import main_menu
 
-# ❌ JANGAN IMPORT REGISTER_HANDLER DI SINI
+# IMPORT APPSCRIPT (PASTIKAN INI ADA DI ROOT PROJECT)
+from appscript import register
 
+
+# =========================
+# STEP 1: START COMMAND
+# =========================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
@@ -21,6 +26,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return WALLET
 
 
+# =========================
+# STEP 2: INPUT WALLET
+# =========================
 async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["wallet"] = update.message.text.strip()
@@ -32,15 +40,19 @@ async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
     return GMAIL
 
 
+# =========================
+# STEP 3: INPUT GMAIL + REGISTER
+# =========================
 async def gmail(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    wallet = context.user_data["wallet"]
+    wallet = context.user_data.get("wallet")
     gmail = update.message.text.strip()
     telegram = str(update.effective_user.id)
 
+    # CALL APPSCRIPT REGISTER
     result = register(wallet, gmail, telegram)
 
-    if result["success"]:
+    if result.get("success"):
 
         await update.message.reply_text(
             "✅ Registrasi berhasil.",
@@ -49,29 +61,42 @@ async def gmail(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         return ConversationHandler.END
 
-    await update.message.reply_text(result["message"])
+    await update.message.reply_text(
+        result.get("message", "Terjadi kesalahan.")
+    )
+
     return ConversationHandler.END
 
 
+# =========================
+# CANCEL COMMAND
+# =========================
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    await update.message.reply_text("Registrasi dibatalkan.")
+    await update.message.reply_text("❌ Registrasi dibatalkan.")
+
     return ConversationHandler.END
 
 
-# ✅ REGISTER HANDLER DIBUAT DI DALAM FILE INI (BUKAN IMPORT)
+# =========================
+# CONVERSATION HANDLER
+# =========================
 register_handler = ConversationHandler(
+
     entry_points=[
         CommandHandler("start", start)
     ],
+
     states={
         WALLET: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, wallet)
         ],
+
         GMAIL: [
             MessageHandler(filters.TEXT & ~filters.COMMAND, gmail)
         ]
     },
+
     fallbacks=[
         CommandHandler("cancel", cancel)
     ]
