@@ -1,26 +1,29 @@
 from telegram import Update
 from telegram.ext import ContextTypes
+from appscript import get_komisi
 
-from services.appscript import get_komisi
+async def komisi_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    user_id = update.effective_user.id
 
-async def komisi(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    data = get_komisi(user_id)
 
-    telegram = str(update.effective_user.id)
-
-    result = get_komisi(telegram)
-
-    if not result["success"]:
-        await update.message.reply_text(result["message"])
+    if not data.get("success"):
+        await update.message.reply_text(data.get("message"))
         return
 
-    text = (
-        "💰 <b>Informasi Komisi</b>\n\n"
-        f"🆔 ID Wallet : <code>{result['wallet']}</code>\n"
-        f"💵 Komisi : <b>${result['komisi']}</b>"
-    )
+    msg = f"""
+💰 INFO KOMISI
 
-    await update.message.reply_text(
-        text,
-        parse_mode="HTML"
-    )
+Wallet: {data['wallet']}
+Komisi: ${data['komisi']}
+
+Bank: {data['bank'] or '-'}
+Nama: {data['namaRekening'] or '-'}
+Rekening: {data['rekening'] or '-'}
+
+Status Rekening:
+{'✅ Lengkap' if data['bankComplete'] else '❌ Belum Lengkap'}
+"""
+
+    await update.message.reply_text(msg)
