@@ -8,7 +8,6 @@ from telegram.ext import (
 )
 
 from keyboards.menu import main_menu
-from services.appscript import register
 
 from states import WALLET, GMAIL
 
