@@ -35,3 +35,13 @@ def withdraw(telegram, nominal, bank="", rekening=""):
 
     r = requests.post(APPS_SCRIPT_URL, data=payload)
     return r.json()
+
+def get_profile(telegram):
+
+    payload = {
+        "action": "komisi",
+        "telegram": telegram
+    }
+
+    r = requests.post(APPS_SCRIPT_URL, data=payload)
+    return r.json()
