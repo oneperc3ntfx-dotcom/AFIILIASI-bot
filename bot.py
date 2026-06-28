@@ -1,35 +1,16 @@
-from telegram.ext import (
-    Application,
-    MessageHandler,
-    filters,
-)
-
+from telegram.ext import Application
 from config import BOT_TOKEN
 
-from handlers.start import register_handler
-from handlers.komisi import komisi
+from handlers.komisi import komisi_cmd
 from handlers.withdraw import withdraw_handler
 
+app = Application.builder().token(BOT_TOKEN).build()
 
-def main():
+# command
+app.add_handler(komisi_cmd)
 
-    app = Application.builder().token(BOT_TOKEN).build()
+# withdraw flow
+app.add_handler(withdraw_handler)
 
-    app.add_handler(register_handler)
-
-    app.add_handler(
-        MessageHandler(
-            filters.Regex("^💰 Cek Komisi$"),
-            komisi
-        )
-    )
-
-    app.add_handler(withdraw_handler)
-
-    print("Bot Running...")
-
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
+print("Bot running...")
+app.run_polling()
