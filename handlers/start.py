@@ -1,98 +1,20 @@
-from telegram import Update
-from telegram.ext import (
-    ContextTypes,
-    ConversationHandler,
-    CommandHandler,
-    MessageHandler,
-    filters,
-)
+from telegram.ext import Application, CommandHandler
 
-from keyboards.menu import main_menu
+from config import BOT_TOKEN
+from handlers.start import register_handler
+from handlers.komisi import komisi_cmd
+from handlers.withdraw import withdraw_start, withdraw_handler
 
-from states import WALLET, GMAIL
+app = Application.builder().token(BOT_TOKEN).build()
 
+# REGISTER CONVERSATION HANDLER
+app.add_handler(register_handler)
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# COMMANDS LAIN
+app.add_handler(CommandHandler("komisi", komisi_cmd))
+app.add_handler(CommandHandler("withdraw", withdraw_start))
 
-    await update.message.reply_text(
-        "👋 Selamat Datang.\n\nMasukkan ID Wallet Anda."
-    )
+app.add_handler(withdraw_handler)
 
-    return WALLET
-
-
-async def wallet(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    context.user_data["wallet"] = update.message.text.strip()
-
-    await update.message.reply_text(
-        "Sekarang masukkan Gmail yang terdaftar pada broker."
-    )
-
-    return GMAIL
-
-
-async def gmail(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    wallet = context.user_data["wallet"]
-    gmail = update.message.text.strip()
-    telegram = str(update.effective_user.id)
-
-    result = register(wallet, gmail, telegram)
-
-    if result["success"]:
-
-        await update.message.reply_text(
-            "✅ Registrasi berhasil.",
-            reply_markup=main_menu()
-        )
-
-        return ConversationHandler.END
-
-    await update.message.reply_text(result["message"])
-
-    return ConversationHandler.END
-
-
-async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    await update.message.reply_text("Registrasi dibatalkan.")
-
-    return ConversationHandler.END
-
-
-register_handler = ConversationHandler(
-
-    entry_points=[
-        CommandHandler("start", start)
-    ],
-
-    states={
-
-        WALLET: [
-
-            MessageHandler(
-                filters.TEXT & ~filters.COMMAND,
-                wallet
-            )
-
-        ],
-
-        GMAIL: [
-
-            MessageHandler(
-                filters.TEXT & ~filters.COMMAND,
-                gmail
-            )
-
-        ]
-
-    },
-
-    fallbacks=[
-
-        CommandHandler("cancel", cancel)
-
-    ]
-
-)
+print("BOT RUNNING...")
+app.run_polling()
