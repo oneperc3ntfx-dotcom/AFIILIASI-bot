@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from services.appscript import get_komisi
+from appscript import get_komisi
 
 
 async def komisi_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
