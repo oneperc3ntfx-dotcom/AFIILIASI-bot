@@ -1,22 +1,16 @@
 from telegram import ReplyKeyboardMarkup
-from config import ADMIN_IDS
 
 
-def main_menu(user_id=None):
+def main_menu():
 
     keyboard = [
-
         ["💰 Komisi", "🏦 Withdraw"],
-
         ["📞 Support", "ℹ️ Bantuan"]
-
     ]
-
-    if user_id in ADMIN_IDS:
-        keyboard.append(["🛠 Admin Panel"])
 
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
-        one_time_keyboard=False
+        one_time_keyboard=False,
+        input_field_placeholder="Silakan pilih menu..."
     )
