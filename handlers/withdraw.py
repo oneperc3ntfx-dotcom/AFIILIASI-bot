@@ -26,7 +26,6 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
 
         await update.message.reply_text(f"❌ {e}")
-        )
 
         return ConversationHandler.END
 
