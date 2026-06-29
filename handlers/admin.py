@@ -1,18 +1,64 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-# contoh sederhana (pakai command dulu)
-# nanti bisa kita upgrade jadi button inline
-
-async def approve(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    wd_id = context.args[0]
-
-    await update.message.reply_text(f"✅ WD {wd_id} sudah DIAPPROVE")
+from services.appscript import approve_withdraw, reject_withdraw
 
 
-async def reject(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    wd_id = context.args[0]
+    query = update.callback_query
+    await query.answer()
 
-    await update.message.reply_text(f"❌ WD {wd_id} DITOLAK + refund diproses")
+    data = query.data
+
+    try:
+        action, wd_id = data.split(":")
+    except ValueError:
+        await query.edit_message_text("❌ Data callback tidak valid.")
+        return
+
+    if action == "wd_done":
+
+        result = approve_withdraw(wd_id)
+
+        if result.get("success"):
+
+            text = f"""✅ WITHDRAW APPROVED
+
+🆔 WD ID : {wd_id}
+
+Status : Done
+"""
+
+        else:
+
+            text = f"""❌ Gagal approve
+
+{result.get("message")}
+"""
+
+        await query.edit_message_text(text)
+
+        return
+
+    if action == "wd_reject":
+
+        result = reject_withdraw(wd_id)
+
+        if result.get("success"):
+
+            text = f"""❌ WITHDRAW REJECTED
+
+🆔 WD ID : {wd_id}
+
+Saldo member telah dikembalikan.
+"""
+
+        else:
+
+            text = f"""❌ Gagal reject
+
+{result.get("message")}
+"""
+
+        await query.edit_message_text(text)
