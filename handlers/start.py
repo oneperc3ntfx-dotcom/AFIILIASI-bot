@@ -11,7 +11,7 @@ from telegram.ext import (
 
 from states import WALLET, GMAIL
 from keyboards.menu import main_menu
-from services.appscript import register
+from appscript import register
 
 
 # =========================
