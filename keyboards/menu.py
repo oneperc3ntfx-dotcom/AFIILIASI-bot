@@ -1,7 +1,8 @@
 from telegram import ReplyKeyboardMarkup
+from config import ADMIN_IDS
 
 
-def main_menu():
+def main_menu(user_id=None):
 
     keyboard = [
 
@@ -11,9 +12,11 @@ def main_menu():
 
     ]
 
+    if user_id in ADMIN_IDS:
+        keyboard.append(["🛠 Admin Panel"])
+
     return ReplyKeyboardMarkup(
         keyboard,
         resize_keyboard=True,
-        one_time_keyboard=False,
-        selective=False
+        one_time_keyboard=False
     )
