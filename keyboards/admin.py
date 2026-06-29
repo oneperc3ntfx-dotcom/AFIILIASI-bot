@@ -1,10 +1,8 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-def withdraw_admin_keyboard(
-    wd_id,
-    telegram
-):
+def withdraw_admin_keyboard(wd_id):
+    
     keyboard = [
         [
             InlineKeyboardButton(
