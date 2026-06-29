@@ -34,7 +34,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-        telegram = data["telegram"]
+        telegram = data[1]
 
     except Exception as e:
         await query.edit_message_text(
