@@ -9,7 +9,7 @@ from telegram.ext import (
 from config import ADMIN_GROUP_ID
 from keyboards.admin import withdraw_admin_keyboard
 from appscript import get_komisi, withdraw
-from states import BANK, REKENING, NOMINAL
+from states import BANK, NAMA_REKENING, REKENING, NOMINAL
 
 
 # ==========================
