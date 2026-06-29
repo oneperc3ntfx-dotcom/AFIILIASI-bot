@@ -23,10 +23,9 @@ async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         result = get_komisi(telegram)
 
-    except Exception:
+    except Exception as e:
 
-        await update.message.reply_text(
-            "❌ Server sedang bermasalah."
+        await update.message.reply_text(f"❌ {e}")
         )
 
         return ConversationHandler.END
