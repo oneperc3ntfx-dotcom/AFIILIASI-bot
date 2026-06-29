@@ -1,78 +1,271 @@
 from telegram import Update
-from telegram.ext import ContextTypes, ConversationHandler, MessageHandler, filters
-from appscript import withdraw
+from telegram.ext import (
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters,
+)
 
-ASK_NOMINAL = 1
+from config import ADMIN_GROUP_ID
+from keyboards.admin import withdraw_admin_keyboard
+from services.appscript import get_komisi, withdraw
+from states import BANK, REKENING, NOMINAL
+
+
+# ==========================
+# START WITHDRAW
+# ==========================
 
 async def withdraw_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Masukkan nominal withdraw:")
-    return ASK_NOMINAL
 
-
-async def withdraw_nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    user_id = update.effective_user.id
-    nominal = update.message.text
+    telegram = str(update.effective_user.id)
 
     try:
-        nominal = float(nominal)
-    except:
-        await update.message.reply_text("Nominal tidak valid.")
-        return ASK_NOMINAL
+        result = get_komisi(telegram)
 
-    result = withdraw(user_id, nominal)
+    except Exception:
+        await update.message.reply_text(
+            "❌ Server sedang bermasalah.\nSilakan coba beberapa saat lagi."
+        )
+        return ConversationHandler.END
 
-    # kalau saldo kurang
     if not result.get("success"):
 
-        if result.get("maksimal"):
-            await update.message.reply_text(
-                f"❌ Saldo tidak cukup\n"
-                f"Saldo maksimal: ${result['maksimal']}"
-            )
-        else:
-            await update.message.reply_text(result.get("message"))
+        await update.message.reply_text(
+            result.get("message")
+        )
 
         return ConversationHandler.END
 
-    # sukses
+    context.user_data["wallet"] = result.get("wallet")
+    context.user_data["bank"] = result.get("bank") or ""
+    context.user_data["rekening"] = result.get("rekening") or ""
+
+    if (
+        context.user_data["bank"] == ""
+        or
+        context.user_data["rekening"] == ""
+    ):
+
+        await update.message.reply_text(
+            "🏦 Data rekening belum tersedia.\n\nMasukkan Nama Bank."
+        )
+
+        return BANK
+
+    await update.message.reply_text(
+        f"""💰 Komisi Anda : ${float(result.get("komisi",0)):,.2f}
+
+Masukkan nominal Withdraw (USD)."""
+    )
+
+    return NOMINAL
+
+
+# ==========================
+# INPUT BANK
+# ==========================
+
+async def bank(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    context.user_data["bank"] = update.message.text.strip()
+
+    await update.message.reply_text(
+        "Masukkan Nomor Rekening."
+    )
+
+    return REKENING
+
+
+# ==========================
+# INPUT REKENING
+# ==========================
+
+async def rekening(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    context.user_data["rekening"] = update.message.text.strip()
+
+    await update.message.reply_text(
+        "Masukkan Nominal Withdraw."
+    )
+
+    return NOMINAL
+
+
+# ==========================
+# INPUT NOMINAL
+# ==========================
+
+async def nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    telegram = str(update.effective_user.id)
+
+    text = update.message.text.strip()
+
+    try:
+        nominal = float(text)
+
+    except ValueError:
+
+        await update.message.reply_text(
+            "❌ Nominal harus berupa angka."
+        )
+
+        return NOMINAL
+
+    if nominal <= 0:
+
+        await update.message.reply_text(
+            "❌ Nominal tidak valid."
+        )
+
+        return NOMINAL
+
+    bank = context.user_data["bank"]
+    rekening = context.user_data["rekening"]
+
+    try:
+
+        result = withdraw(
+            telegram=telegram,
+            nominal=nominal,
+            bank=bank,
+            rekening=rekening
+        )
+
+    except Exception:
+
+        await update.message.reply_text(
+            "❌ Server sedang bermasalah."
+        )
+
+        return ConversationHandler.END
+
+    if not result.get("success"):
+
+        await update.message.reply_text(
+            result.get("message")
+        )
+
+        return ConversationHandler.END
+
+    # ==========================
+    # USER MESSAGE
+    # ==========================
+
     await update.message.reply_text(
         f"""
-✅ Withdraw berhasil diajukan
+✅ Withdraw Berhasil
 
-WD ID: {result['wdId']}
-Nominal: ${result['nominal']}
-Status: Pending
+🆔 WD ID :
+{result['wdId']}
 
-Menunggu approval admin.
+💵 Nominal :
+${float(result['nominal']):,.2f}
+
+💰 Sisa Komisi :
+${float(result['sisaKomisi']):,.2f}
+
+🏦 Bank :
+{result['bank']}
+
+📋 Status :
+{result['status']}
 """
     )
 
-    # kirim ke admin group
-    from config import ADMIN_GROUP_ID
-    from bot import bot
+    # ==========================
+    # ADMIN GROUP
+    # ==========================
 
-    msg = f"""
-🚨 REQUEST WITHDRAW
+    admin_text = f"""
+📥 REQUEST WITHDRAW
 
-WD ID: {result['wdId']}
-User: {user_id}
-Nominal: ${result['nominal']}
+🆔 WD ID :
+{result['wdId']}
 
-Bank: {result['bank']}
-Nama: {result['namaRekening']}
-Rek: {result['rekening']}
+👛 Wallet :
+{result['wallet']}
+
+👤 Telegram :
+{telegram}
+
+💵 Nominal :
+${float(result['nominal']):,.2f}
+
+🏦 Bank :
+{result['bank']}
+
+💳 Rekening :
+{result['rekening']}
+
+📋 Status :
+{result['status']}
 """
 
-    await bot.send_message(chat_id=ADMIN_GROUP_ID, text=msg)
+    await context.bot.send_message(
+
+        chat_id=ADMIN_GROUP_ID,
+
+        text=admin_text,
+
+        reply_markup=withdraw_admin_keyboard(
+            result["wdId"]
+        )
+
+    )
 
     return ConversationHandler.END
 
 
+# ==========================
+# HANDLER
+# ==========================
+
 withdraw_handler = ConversationHandler(
-    entry_points=[],
+
+    entry_points=[
+
+        MessageHandler(
+            filters.Regex("^🏦 Withdraw$"),
+            withdraw_start
+        )
+
+    ],
+
     states={
-        ASK_NOMINAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, withdraw_nominal)]
+
+        BANK:[
+
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                bank
+            )
+
+        ],
+
+        REKENING:[
+
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                rekening
+            )
+
+        ],
+
+        NOMINAL:[
+
+            MessageHandler(
+                filters.TEXT & ~filters.COMMAND,
+                nominal
+            )
+
+        ]
+
     },
-    fallbacks=[]
+
+    fallbacks=[],
+
+    allow_reentry=True
+
 )
