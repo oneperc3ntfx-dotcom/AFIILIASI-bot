@@ -2,49 +2,29 @@ import requests
 
 from config import APPSCRIPT_URL
 
-
 TIMEOUT = 20
 
 
+# ==========================================
+# REQUEST
+# ==========================================
+
 def _request(payload):
 
-    try:
+    response = requests.post(
+        APPSCRIPT_URL,
+        data=payload,
+        timeout=TIMEOUT
+    )
 
-        response = requests.post(
-            APPSCRIPT_URL,
-            data=payload,
-            timeout=TIMEOUT
-        )
+    response.raise_for_status()
 
-        response.raise_for_status()
-
-        return response.json()
-
-    except requests.exceptions.Timeout:
-
-        return {
-            "success": False,
-            "message": "Server timeout."
-        }
-
-    except requests.exceptions.ConnectionError:
-
-        return {
-            "success": False,
-            "message": "Tidak dapat terhubung ke server."
-        }
-
-    except Exception as e:
-
-        return {
-            "success": False,
-            "message": str(e)
-        }
+    return response.json()
 
 
-# ============================================
+# ==========================================
 # REGISTER
-# ============================================
+# ==========================================
 
 def register(wallet, gmail, telegram):
 
@@ -61,9 +41,9 @@ def register(wallet, gmail, telegram):
     })
 
 
-# ============================================
-# CEK KOMISI
-# ============================================
+# ==========================================
+# KOMISI
+# ==========================================
 
 def get_komisi(telegram):
 
@@ -76,15 +56,15 @@ def get_komisi(telegram):
     })
 
 
-# ============================================
+# ==========================================
 # WITHDRAW
-# ============================================
+# ==========================================
 
 def withdraw(
     telegram,
     nominal,
     bank="",
-    namaRekening="",
+    nama_rekening="",
     rekening=""
 ):
 
@@ -98,16 +78,17 @@ def withdraw(
 
         "bank": bank,
 
-        "namaRekening": namaRekening,
+        # Apps Script menggunakan camelCase
+        "namaRekening": nama_rekening,
 
         "rekening": rekening
 
     })
 
 
-# ============================================
-# APPROVE WITHDRAW
-# ============================================
+# ==========================================
+# APPROVE
+# ==========================================
 
 def approve_withdraw(wd_id):
 
@@ -120,9 +101,9 @@ def approve_withdraw(wd_id):
     })
 
 
-# ============================================
-# REJECT WITHDRAW
-# ============================================
+# ==========================================
+# REJECT
+# ==========================================
 
 def reject_withdraw(wd_id):
 
