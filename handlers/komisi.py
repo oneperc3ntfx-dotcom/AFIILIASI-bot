@@ -1,29 +1,55 @@
 from telegram import Update
 from telegram.ext import ContextTypes
-from appscript import get_komisi
+
+from services.appscript import get_komisi
+
 
 async def komisi_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user_id = update.effective_user.id
+    telegram = str(update.effective_user.id)
 
-    data = get_komisi(user_id)
+    try:
+        data = get_komisi(telegram)
 
-    if not data.get("success"):
-        await update.message.reply_text(data.get("message"))
+    except Exception:
+        await update.message.reply_text(
+            "❌ Tidak dapat terhubung ke server.\nSilakan coba beberapa saat lagi."
+        )
         return
 
-    msg = f"""
-💰 INFO KOMISI
+    if not data.get("success", False):
+        await update.message.reply_text(
+            data.get("message", "Terjadi kesalahan.")
+        )
+        return
 
-Wallet: {data['wallet']}
-Komisi: ${data['komisi']}
+    wallet = data.get("wallet", "-")
+    komisi = float(data.get("komisi", 0))
+    bank = data.get("bank") or "-"
+    nama = data.get("namaRekening") or "-"
+    rekening = data.get("rekening") or "-"
 
-Bank: {data['bank'] or '-'}
-Nama: {data['namaRekening'] or '-'}
-Rekening: {data['rekening'] or '-'}
+    bank_complete = data.get("bankComplete")
 
-Status Rekening:
-{'✅ Lengkap' if data['bankComplete'] else '❌ Belum Lengkap'}
-"""
+    if bank_complete is None:
+        bank_complete = (
+            bank != "-" and
+            nama != "-" and
+            rekening != "-"
+        )
 
-    await update.message.reply_text(msg)
+    text = (
+        "💰 <b>INFO KOMISI</b>\n\n"
+        f"👛 <b>Wallet</b>\n{wallet}\n\n"
+        f"💵 <b>Komisi</b>\n${komisi:,.2f}\n\n"
+        f"🏦 <b>Bank</b>\n{bank}\n\n"
+        f"👤 <b>Nama Rekening</b>\n{nama}\n\n"
+        f"💳 <b>No. Rekening</b>\n{rekening}\n\n"
+        f"📋 <b>Status Rekening</b>\n"
+        f"{'✅ Lengkap' if bank_complete else '❌ Belum Lengkap'}"
+    )
+
+    await update.message.reply_text(
+        text,
+        parse_mode="HTML"
+    )
