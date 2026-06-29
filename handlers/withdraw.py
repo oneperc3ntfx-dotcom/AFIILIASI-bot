@@ -242,13 +242,19 @@ ${float(result['nominal']):,.2f}
 
     await context.bot.send_message(
 
-        chat_id=ADMIN_GROUP_ID,
-        text=admin_text,
-        reply_markup=withdraw_admin_keyboard(
-            result["wdId"]
-        )
+    chat_id=ADMIN_GROUP_ID,
+
+    text=admin_text,
+
+    reply_markup=withdraw_admin_keyboard(
+
+        result["wdId"],
+
+        telegram
 
     )
+
+)
 
     return ConversationHandler.END
 
