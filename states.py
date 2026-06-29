@@ -1,8 +1,16 @@
-# Register
+# ==========================
+# REGISTER
+# ==========================
+
 WALLET = 0
 GMAIL = 1
 
-# Withdraw
-BANK = 2
-REKENING = 3
-NOMINAL = 4
+
+# ==========================
+# WITHDRAW
+# ==========================
+
+BANK = 10
+NAMA_REKENING = 11
+REKENING = 12
+NOMINAL = 13
