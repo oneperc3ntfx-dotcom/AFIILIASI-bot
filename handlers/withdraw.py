@@ -246,13 +246,7 @@ ${float(result['nominal']):,.2f}
 
     text=admin_text,
 
-    reply_markup=withdraw_admin_keyboard(
-
-        result["wdId"],
-
-        telegram
-
-    )
+    reply_markup=withdraw_admin_keyboard(result["wdId"])
 
 )
 
