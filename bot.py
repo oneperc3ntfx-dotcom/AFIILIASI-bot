@@ -49,7 +49,7 @@ Jika mengalami kendala mengenai:
 
 Silakan hubungi Admin.
 
-👉 https://t.me/USERNAME_ADMIN
+👉 https://t.me/ADMOnePercentsFX
 """
     )
 
