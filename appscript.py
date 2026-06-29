@@ -1,47 +1,135 @@
 import requests
+
 from config import APPSCRIPT_URL
 
 
-# =========================
-# REGISTER MEMBER (FIX BARU)
-# =========================
+TIMEOUT = 20
+
+
+def _request(payload):
+
+    try:
+
+        response = requests.post(
+            APPSCRIPT_URL,
+            data=payload,
+            timeout=TIMEOUT
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    except requests.exceptions.Timeout:
+
+        return {
+            "success": False,
+            "message": "Server timeout."
+        }
+
+    except requests.exceptions.ConnectionError:
+
+        return {
+            "success": False,
+            "message": "Tidak dapat terhubung ke server."
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+# ============================================
+# REGISTER
+# ============================================
+
 def register(wallet, gmail, telegram):
 
-    r = requests.get(APPSCRIPT_URL, params={
+    return _request({
+
         "action": "register",
+
         "wallet": wallet,
+
         "gmail": gmail,
+
         "telegram": telegram
+
     })
 
-    return r.json()
 
-
-# =========================
+# ============================================
 # CEK KOMISI
-# =========================
-def get_komisi(telegram_id):
+# ============================================
 
-    r = requests.get(APPSCRIPT_URL, params={
+def get_komisi(telegram):
+
+    return _request({
+
         "action": "komisi",
-        "telegram": telegram_id
+
+        "telegram": telegram
+
     })
 
-    return r.json()
 
-
-# =========================
+# ============================================
 # WITHDRAW
-# =========================
-def withdraw(telegram_id, nominal, bank="", namaRekening="", rekening=""):
+# ============================================
 
-    r = requests.get(APPSCRIPT_URL, params={
+def withdraw(
+    telegram,
+    nominal,
+    bank="",
+    namaRekening="",
+    rekening=""
+):
+
+    return _request({
+
         "action": "withdraw",
-        "telegram": telegram_id,
+
+        "telegram": telegram,
+
         "nominal": nominal,
+
         "bank": bank,
+
         "namaRekening": namaRekening,
+
         "rekening": rekening
+
     })
 
-    return r.json()
+
+# ============================================
+# APPROVE WITHDRAW
+# ============================================
+
+def approve_withdraw(wd_id):
+
+    return _request({
+
+        "action": "approveWithdraw",
+
+        "wdId": wd_id
+
+    })
+
+
+# ============================================
+# REJECT WITHDRAW
+# ============================================
+
+def reject_withdraw(wd_id):
+
+    return _request({
+
+        "action": "rejectWithdraw",
+
+        "wdId": wd_id
+
+    })
