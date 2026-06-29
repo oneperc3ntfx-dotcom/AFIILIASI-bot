@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from appscript import approve_withdraw, reject_withdraw
+from appscript import approve_withdraw, reject_withdraw, get_withdraw_by_id
 
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -9,16 +9,37 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
+    # ==========================================
+    # PARSE CALLBACK
+    # ==========================================
+
     try:
-
         action, wd_id = query.data.split(":")
-
     except ValueError:
-
         await query.edit_message_text(
             "❌ Data callback tidak valid."
         )
+        return
 
+    # ==========================================
+    # GET DATA FROM DATABASE (IMPORTANT FIX)
+    # ==========================================
+
+    try:
+        data = get_withdraw_by_id(wd_id)
+
+        if not data:
+            await query.edit_message_text(
+                "❌ Data withdraw tidak ditemukan."
+            )
+            return
+
+        telegram = data["telegram"]
+
+    except Exception as e:
+        await query.edit_message_text(
+            f"❌ Gagal mengambil data withdraw.\n{e}"
+        )
         return
 
     # ==========================================
@@ -31,7 +52,6 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if result.get("success"):
 
-            # Edit pesan di grup admin
             await query.edit_message_text(
                 f"""✅ WITHDRAW APPROVED
 
@@ -41,30 +61,23 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 Status : Done"""
             )
 
-            # Kirim ke user
             try:
-
                 await context.bot.send_message(
-
                     chat_id=int(telegram),
-
                     text=f"""✅ Withdraw Berhasil Diproses
 
 🆔 WD ID
 {wd_id}
 
-Status
-Done
+Status : Done
 
 Dana Anda sedang diproses ke rekening yang terdaftar.
 
 Terima kasih telah menggunakan layanan kami."""
-
                 )
 
             except Exception as e:
-
-                print(e)
+                print(f"Send user message error: {e}")
 
         else:
 
@@ -86,7 +99,6 @@ Terima kasih telah menggunakan layanan kami."""
 
         if result.get("success"):
 
-            # Edit pesan di grup admin
             await query.edit_message_text(
                 f"""❌ WITHDRAW REJECTED
 
@@ -96,32 +108,25 @@ Terima kasih telah menggunakan layanan kami."""
 Status : Rejected"""
             )
 
-            # Kirim ke user
             try:
-
                 await context.bot.send_message(
-
                     chat_id=int(telegram),
-
                     text=f"""❌ Withdraw Ditolak
 
 🆔 WD ID
 {wd_id}
 
-Status
-Rejected
+Status : Rejected
 
 💰 Saldo komisi Anda telah dikembalikan.
 
 Silakan hubungi Admin:
 
 👉 @ONEPercentsFX"""
-
                 )
 
             except Exception as e:
-
-                print(e)
+                print(f"Send user message error: {e}")
 
         else:
 
