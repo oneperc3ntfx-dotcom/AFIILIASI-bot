@@ -4,10 +4,8 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 def withdraw_admin_keyboard(
     wd_id,
     telegram
-)
-
+):
     keyboard = [
-
         [
             InlineKeyboardButton(
                 "✅ Done",
@@ -18,7 +16,6 @@ def withdraw_admin_keyboard(
                 callback_data=f"wd_reject:{wd_id}"
             )
         ]
-
     ]
 
     return InlineKeyboardMarkup(keyboard)
