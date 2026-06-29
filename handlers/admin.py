@@ -11,7 +11,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
 
-        action, wd_id, telegram = query.data.split(":")
+        action, wd_id = query.data.split(":")
 
     except ValueError:
 
