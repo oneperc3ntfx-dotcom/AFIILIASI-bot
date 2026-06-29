@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from services.appscript import approve_withdraw, reject_withdraw
+from appscript import approve_withdraw, reject_withdraw
 
 
 async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
