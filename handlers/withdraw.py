@@ -187,7 +187,7 @@ async def nominal(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text(
 
-        f"""✅ Withdraw Berhasil
+        f"""✅ Withdraw Berhasil Silahkan Check Berkala Mutasi Bank kamu
 
 🆔 WD ID
 {result['wdId']}
